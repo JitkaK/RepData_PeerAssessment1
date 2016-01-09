@@ -4,18 +4,57 @@ output:
   html_document:
     keep_md: true
 ---
-
+"Reproducible Research: Peer Assessment 1"
+=============================================
 
 ## Loading and preprocessing the data
-
+```{r, echo=TRUE}
+data <- read.csv("activity.csv")
+```
 
 
 ## What is mean total number of steps taken per day?
 
+Firstly create a vector of total number of steps taken each day and then create the histogram:
+```{r, echo=TRUE,fig.height=4}
+tot_steps <- sapply(split(data$steps,data$date),sum,na.rm=T)
+hist(tot_steps,main="Histogram of the total number of steps taken each day",xlab="Number of steps")
+```
 
+After that compute mean and median total steps taken each day:
+```{r,echo=TRUE}
+mean(tot_steps)
+median(tot_steps)
+```
 
 ## What is the average daily activity pattern?
 
+In this section we create a time series plot of average number of steps taken every day through each 5-minute intervals. Firstly, we have to count the average using `sapply` function
+```{r,echo=TRUE}
+mean_day_intervals <- sapply(split(data$steps,data$interval),mean,na.rm=T)
+```
+
+And then plot the time series
+```{r,echo=TRUE,fig.height=4}
+plot(mean_day_intervals,type="l",main="Time series of average number of steps",xlab="5-minute intervals",ylab="Average number of steps")
+```
+
+We find the maximal value of average number of steps taken every day with the variable `max`:
+```{r,echo=TRUE}
+max <- which(mean_day_intervals==max(mean_day_intervals))
+```
+
+
+To find which interval is the maximal one, we call the variable max as numeric:
+```{r,echo=TRUE}
+as.numeric(max)
+```
+
+We could show the exact time when the interval begins:
+```{r,echo=TRUE}
+time <- as.numeric(names(max))
+paste(time%/%100,time%%100,sep=":")
+```
 
 
 ## Imputing missing values
