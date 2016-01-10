@@ -15,7 +15,7 @@ data <- read.csv("activity.csv")
 
 ## What is mean total number of steps taken per day?
 
-Firstly a vector of total number of steps taken each day is created and then the histogram:
+Firstly, a vector of total number of steps taken each day is created and then the histogram:
 ```{r, echo=TRUE,fig.height=4}
 tot_steps <- sapply(split(data$steps,data$date),sum,na.rm=T)
 hist(tot_steps,main="Histogram of the total number of steps taken each day",xlab="Number of steps")
@@ -29,29 +29,29 @@ median(tot_steps)
 
 ## What is the average daily activity pattern?
 
-In this section we create a time series plot of average number of steps taken every day through each 5-minute intervals. Firstly, we have to count the average using `sapply` function on the list of intervals:
+In this section a time series plot of average number of steps taken every day through each 5-minute intervals is created. Firstly, average of steps across 5-minutes intervals is calculated using `sapply` function on the list of intervals:
 ```{r,echo=TRUE}
 Int <- split(data$steps,data$interval) #list of intervals
-mean_day_intervals <- sapply(Int,mean,na.rm=T)
+mean_day_intervals <- sapply(Int,mean,na.rm=T) #average of each 5-minute interval
 ```
 
-And then plot the time series
+And then the time series plot is drawn:
 ```{r,echo=TRUE,fig.height=4}
 plot(mean_day_intervals,type="l",main="Time series of average number of steps",xlab="5-minute intervals",ylab="Average number of steps")
 ```
 
-We find the maximal value of average number of steps taken every day with the variable `max`:
+The maximal value of average number of steps taken every day is find using the variable `max`:
 ```{r,echo=TRUE}
 max <- which(mean_day_intervals==max(mean_day_intervals))
 ```
 
 
-To find which interval is the maximal one, we call the variable max as numeric:
+To find which interval is the maximal one, it's usefull to call the variable max as numeric (the variable without a name):
 ```{r,echo=TRUE}
 as.numeric(max)
 ```
 
-We could show the exact time when the interval begins:
+Finally, the exact time when the interval begins could be shown:
 ```{r,echo=TRUE}
 time <- as.numeric(names(max))
 paste(time%/%100,time%%100,sep=":")
@@ -60,39 +60,41 @@ paste(time%/%100,time%%100,sep=":")
 
 ## Imputing missing values
 
-Finding how many of NA values are in dataset:
+Finding how many of NA values are in data set:
 ```{r,echo=TRUE}
 sum(is.na(data$steps))
 ```
 
-We will use the median of 5-minute intervals for fill in NA values. Firstly, variable `median_day_interval` is made:
+The median of 5-minute intervals will be used to fill in NA values. Firstly, variable `median_day_interval` is made:
 ```{r,echo=TRUE}
-median_day_intervals <- sapply(Int,median,na.rm=T)
+median_day_intervals <- sapply(Int,median,na.rm=T) # Int is the list of 5-minute intervals
 ```
 
-Then we create the second dataset
+Then the second data set is created
 ```{r,echo=TRUE}
 data2 <- data
 ```
 
-And the new vector without NA values is bulit in a for-loop 
+And the new vector without NA values is built in a for-loop 
 ```{r,echo=TRUE}
-all_time <- as.numeric(names(Int)) 
-Y<-matrix(0,length(all_time),length(levels(data$date)))
-for (i in 1:length(all_time)){
-    x<-data$steps[data$interval==all_time[i]]
-    x[is.na(x)]<-median_day_intervals[i]
-    Y[i,]<-x
+all_time <- as.numeric(names(Int)) # vector of names of 5-minute intervals
+n <- length(all_time) # number of time intervals
+Y<-matrix(0,n,length(levels(data$date))) # Matrix for storing number of steps with replaced NAs
+
+for (i in 1:n){                               # For each interval 
+    x<-data$steps[data$interval==all_time[i]] # extract number of steps
+    x[is.na(x)]<-median_day_intervals[i]      # replace NAs with median
+    Y[i,]<-x                                  # store it in i-th row of matrix Y
 }
-y <- c(Y)
+y <- c(Y) # vectorize the matrix of number of steps
 ```
 
-This vector replace the first columnt of the new dataset
+This vector replace the first column of the new data set
 ```{r,echo=TRUE}
 data2$steps <- y
 ```
 
-Now we compare the new dataset using histogram
+Now the new data set is compared using histogram
 ```{r, echo=TRUE,fig.height=4}
 tot_steps2 <- sapply(split(data2$steps,data2$date),sum,na.rm=T)
 hist(tot_steps2,main="Histogram of the total number of steps taken each day",sub="after replacing NA values",xlab="Number of steps")
@@ -104,7 +106,7 @@ mean(tot_steps2)
 median(tot_steps2)
 ```
 
-Are they the same?
+Are they same?
 ```{r,echo=TRUE}
 mean(tot_steps2)==mean(tot_steps)
 median(tot_steps2)==median(tot_steps)
@@ -113,47 +115,44 @@ hist(tot_steps2, col=rgb(1,0,0,1/4), add=T) # this histogram is pink
 # combination creates purple color
 ```
 
-Replacing of NA values with median changes the mean but histogram and median of steps remain the same.
+Replacing of NA values with median changes the mean but histogram and median of steps remain same.
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
-At first we have to change the dates into Date class:
+At first dates in data set are changed into Date class:
 ```{r,echo=TRUE}
 date <- lapply(data2$date,as.Date,"%Y-%m-%d")
 ```
 
-Then we have to detect the number of the day (1 for "Monday", 2 for "Tuesday",...)
+Then the number of the day (1 for "Monday", 2 for "Tuesday",..., 0 for "Sunday") is detected
 ```{r,echo=TRUE}
 num_d <- sapply(date,format,"%w")
 #I didn't use the function 'weekdays()' because it returned the name of a day in my language and I wasn't sure if it would work somewhere else.
 ```
 
-Finally we have to detect which day is a weekday and which is a weekend:
+Finally weekdays and weekends are detected:
 ```{r,echo=TRUE}
-day <- rep("weekday",dim(data2)[1])
-day[num_d==0] <- "weekend"
+day <- rep("weekday",dim(data2)[1]) # vector of "weekday"s
+day[num_d==0] <- "weekend" #Sundays and Saturdays are detected
 day[num_d==6] <- "weekend"
-data2$day <- day
+data2$day <- day # vector of "weekday"s and "weekend"s are added to dataset without NAs
 ```
 
 Average number of steps in every interval for weekdays and weekends:
 ```{r,echo=TRUE}
-Week <- split(data2[,c(1,3)],data2$day)
+Week <- split(data2[,c(1,3)],data2$day) # splitting weekday/weekend
 Wday <- Week$weekday
 Wend <- Week$weekend
-Int_d <- split(Wday$steps,Wday$interval)
-Int_e <- split(Wend$steps,Wend$interval)
-mean_day <-sapply(Int_d,mean,na.rm=T)
-mean_end <-sapply(Int_e,mean,na.rm=T)
+Int_d <- split(Wday$steps,Wday$interval) # splitting according to an interval; weekdays
+Int_e <- split(Wend$steps,Wend$interval) # splitting according to an interval; weekends
+mean_day <-sapply(Int_d,mean,na.rm=T) # finding average; weekdays
+mean_end <-sapply(Int_e,mean,na.rm=T) # finding average; weekends
+Days <- data.frame(mean=c(mean_day,mean_end), interval=c(1:n,1:n), 
+                   day=c(rep("weekday",n), rep("weekend",n))) #new dataframe for plotting
 ```
 
-Combined plot of a time series:
+Combined plot of time series:
 ```{r,echo=TRUE}
-m<-rbind(c(1),c(2))
-layout(m)
-par(mar = c(0, 2.5, 3, 1))
-plot(mean_day,type="l",main="Weekdays",xaxt="n")
-par(mar = c(3, 2.5, 3, 1))
-plot(mean_end,type="l",main="Weekends")
+library(lattice)
+xyplot(mean ~ interval | day, data=Days, type="l",layout=c(1,2))
 ```
-
